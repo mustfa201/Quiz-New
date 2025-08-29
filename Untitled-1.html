@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Our Quiz Game ❤️</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg1:#ff9a9e; --bg2:#fad0c4; --primary:#ff4d6d; --primary-dark:#e63950; --card:#fff; --text:#333;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; color:#fff;
+    }
+    .app{
+      width:100%; max-width:780px; background:rgba(255,255,255,.15); backdrop-filter: blur(8px);
+      border-radius:24px; padding:28px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+    }
+    h1{margin:0 0 6px; font-weight:800}
+    .sub{opacity:.9; margin:0 0 18px}
+    .card{
+      background:var(--card); color:var(--text); border-radius:20px; padding:22px; box-shadow:0 8px 24px rgba(0,0,0,.15);
+      margin-top:14px;
+    }
+    .progress-wrap{display:flex; align-items:center; gap:12px; margin:8px 0 18px}
+    .progress{
+      flex:1; height:10px; background:#ffd1da; border-radius:999px; overflow:hidden;
+    }
+    .bar{height:100%; width:0%; background:var(--primary); transition:width .35s ease}
+    .counter{font-weight:700}
+    .q{font-size:20px; font-weight:700; margin-bottom:14px}
+    .options{display:grid; gap:10px}
+    .btn{
+      background:#fff; border:2px solid #ffe2e8; color:var(--text); padding:12px 14px; border-radius:12px; text-align:left; cursor:pointer;
+      transition:.2s ease; font-weight:600;
+    }
+    .btn:hover{transform:translateY(-1px); border-color:#ffc0cc}
+    .btn.correct{background:#e8ffe9; border-color:#a6ecb2}
+    .btn.wrong{background:#ffe8ec; border-color:#ffb0c0}
+    .feedback{min-height:28px; margin-top:10px; font-weight:600}
+    .row{display:flex; gap:10px; margin-top:14px}
+    .pill{
+      background:var(--primary); color:#fff; border:none; padding:12px 16px; border-radius:999px; cursor:pointer; font-weight:700;
+      box-shadow:0 8px 20px rgba(255,77,109,.35);
+    }
+    .pill:disabled{opacity:.5; cursor:not-allowed}
+    .center{text-align:center}
+    .result h2{margin:8px 0}
+    .small{opacity:.8}
+    .hidden{display:none}
+    .badge{display:inline-block; padding:6px 10px; border-radius:999px; background:#fff; color:var(--primary); font-weight:800; margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <h1>💖 A Little Quiz</h1>
+    <p class="sub">Answer the questions...ilysm</p>
+
+    <div class="progress-wrap">
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="counter" id="counter">1 / 30</div>
+    </div>
+
+    <div class="card" id="game">
+      <div class="q" id="question">Loading…</div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="row">
+        <button class="pill" id="nextBtn" disabled>Next ▶</button>
+      </div>
+    </div>
+
+    <div class="card center result hidden" id="result">
+      <h2>🎉 Done!</h2>
+      <p id="scoreLine"></p>
+      <p class="small" id="message"></p>
+      <div class="badge" id="best">Best: 0</div>
+      <div class="row" style="justify-content:center; margin-top:18px">
+        <button class="pill" id="againBtn">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ======== QUESTIONS ========
+    // For multiple correct answers: use answers:[indexes]
+    // For single correct: use answer:index
+    const QUESTIONS = [
+      
+  { q:"What breed and color of cat would Amna be?",
+    options:["A fluffy white Persian cat 🐾","A cute little Munchkin cat 🖤","A playful orange Tabby 🧡","A graceful Siamese with blue eyes 💙"],
+    answer:1,
+    correctMsg:"Small legs and super cuteeee…",
+    wrongMsg:"You’re already my kitten!"
+  },
+  { q:"What’s that tiny thing Amna does that annoys Mustfa?",
+    options:["Always getting mad","Manipulating and evilness 😈","Ignoring while being active 📱","Asking too many questions ❓"],
+    answer:2,
+    correctMsg:"I don’t really get annoyed…but I do dislike the ignoring",
+    wrongMsg:"I don’t get annoyed by my baby....but ignoring stings a lil",
+  },
+  { q:"If Amna forgets Mustfa for one day, what would he do to make her remember?",
+    options:["Bring out old screenshots 📸","Call and talk about her 📞","Buy her food and talk while she eats 🍕","Hug her and talk gently"],
+    answers:[0,1,2,3],
+    correctMsg:"I’ll do everythingggg",
+    wrongMsg:"Like cuddles are nice but we can do everything"
+  },
+  { q:"What’s more dangerous?",
+    options:["Amna being hungry 🍔","Amna being angry","Both together 💥","Neither"],
+    answer:0,
+    correctMsg:"Hungry Amna is unpredictable!",
+    wrongMsg:"Food fixes everything"
+  },
+  { q:"The moment Mustfa realized he’s too deep with Amna…",
+    options:["When he started mentioning you in his prayers","When he caught himself smiling at her texts","When he started planning his future with her 🏡","When he started daydreaming about her as his wife"],
+    answer:3,
+    correctMsg:"Wottttttt I just wanna see you as my wife",
+    wrongMsg:"Imagining you as my wife>>"
+  },
+  { q:"If Mustfa and Amna were stuck in a room, what would they do?",
+    options:["Panic and chaos","Cuddle and relax","Making out violently","Yap about stupid stuff"],
+    answers:[0,1,2,3],
+    correctMsg:"Yeah we doing everythingggg",
+    wrongMsg:"Like cuddles are nice but we can do everything"
+  },
+  { q:"What’s Amna’s secret superpower in this relationship?",
+    options:["Super Manipulation","Instant mood swings","Rage monster","Always winning arguments"],
+    answer:0,
+    correctMsg:"You’re just too good at manipulation",
+    wrongMsg:"Yeah but makimaaaa>>>"
+  },
+  { q:"What breed and color of cat would Mustfa be?",
+    options:["A fluffy white Persian cat 🐾","A sleek black Bombay cat","A playful orange Tabby 🧡","A graceful Siamese with blue eyes 💙"],
+    answer:2,
+    correctMsg:"Playful orange tabbyyy just like me",
+    wrongMsg:"Nopeee it’s the orange tabby"
+  },
+  { q:"What’s Amna’s favorite way of showing love to Mustfa?",
+    options:["Bullying him endlessly","Sending paragraphs","Being clingy","Surprising him with small things 🎁"],
+    answer:0,
+    correctMsg:"I love the bullyinggggggggg",
+    wrongMsg:"Ain’t nothing yummier than the bullying"
+  },
+  { q:"If Amna had to give Mustfa a warning label, what would it say?",
+    options:["Caution: Talks too much","His wife is a murderer","Caution: Radioactive Stoinkiness"],
+    answer:2,
+    correctMsg:"I ain’t that stoinkyyyyyyyyy",
+    wrongMsg:"But I am really stoinky"
+  },
+  { q:"Who is more Stinky?",
+    options:["Amna","Mustfa","Both","Neither"],
+    answer:1,
+    correctMsg:"Nooo jeeeee ap ziyada stinky hainnn",
+    wrongMsg:"Huhhhhhh aese kese ho sakta ha"
+  },
+  { q:"Who has more loving capacity?",
+    options:["Mustfa, Tall and big","Amna, Small and compressed","Equal capacities"],
+    answer:1,
+    correctMsg:"Obviously it’s you baby owl",
+    wrongMsg:"Hell nahhhh you got that compressed capacity"
+  },
+  { q:"If Amna was a song, what genre would she be?",
+    options:["R&B 🎶❤️","Chaotic pop song 🎤✨","Sad emo vibes 🖤🎧","Chill lo-fi beat ☕🌙"],
+    answer:1,
+    correctMsg:"Chaotic popppp",
+    wrongMsg:"Nopeeee it’s chaotic pop"
+  },
+  { q:"If Amna won the lottery, what’s the first thing she’d do?",
+    options:["Go shopping 🛍️","Buy endless food 🍔","Plan a world tour 🌍","Marry Mustfa"],
+    answer:1,
+    correctMsg:"I have a feeling you’re gonna buy a lotttt of food",
+    wrongMsg:"We can just get marriedddd…….."
+  },
+  { q:"What’s the biggest proof Mustfa is obsessed with Amna?",
+    options:["He says ily every five minutes","He sends nudes without hesitation","He always wants her attention 🥺","None, he ain’t obsessed"],
+    answers:[0,1,2],
+    correctMsg:"Wottttt I’m obsessed with youuuuu",
+    wrongMsg:"Did u just choose not obsessed?? CHAPAIRRRR…I’m hella obsessed"
+  },
+  { q:"The moment Amna realized she’s too deep with Mustfa…",
+    options:["When she started mentioning him in her prayers 🤲❤️","When she caught herself smiling at his texts 😊","When she started planning her future with him 🏡","When she started having dreams about him"],
+    answers:[0,1,2,3],
+    correctMsg:"Oh I really wanna know this one",
+    wrongMsg:"Oh I really wanna know this one"
+  },
+  { q:"What would Amna like to steal from Mustfa?",
+    options:["His clothes","His peenar","His food","His name"],
+    answers:[0,1,2,3],
+    correctMsg:"Hmmmmm what u gonna choose on this oneeee",
+    wrongMsg:"All of themmmm"
+  },
+  { q:"When cuddling who gets to be the bigger spoon?",
+    options:["Amna","Mustfa"],
+    answer:1,
+    correctMsg:"Muhehehe I’m gonna cuddle you like my baby",
+    wrongMsg:"Wotttttt so you trynna give me backshots huhhhh"
+  },
+  { q:"What’s the most dangerous weapon Amna owns?",
+    options:["Her Bullying","19.5 Inches","Her sarcasm 🤭","Her hands"],
+    answer:1,
+    correctMsg:"19.5 inches even sounds scaryyy",
+    wrongMsg:"Is it more dangerous than 19.5?"
+  },
+  { q:"Is Mustfa really really bad?",
+    options:["Yes","No"],
+    answer:1,
+    correctMsg:"I ain’t that bad",
+    wrongMsg:"But like….."
+  },
+  { q:"If Amna was a season, which one would she be?",
+    options:["Summer ☀️","Winter ❄️","Spring 🌸","Autumn 🍂"],
+    answer:3,
+    correctMsg:"Cool and pretty",
+    wrongMsg:"Autumn>>"
+  },
+  { q:"Who’s more likely to win an argument?",
+    options:["Amna","Mustfa"],
+    answer:0,
+    correctMsg:"You are too powerful",
+    wrongMsg:"I can’t win against you"
+  },
+  { q:"Who’s more likely to start laughing in a serious situation?",
+    options:["Amna","Mustfa"],
+    answer:0,
+    correctMsg:"Evil laugh",
+    wrongMsg:"We both know it’s you"
+  },
+  { q:"Who’s more likely to get lost even with google maps?",
+    options:["Amna","Mustfa"],
+    answer:0,
+    correctMsg:"I find it really cute",
+    wrongMsg:"We both know it’s you"
+  },
+  { q:"What’s the cutest thing Mustfa has caught Amna doing?",
+    options:["Laughing at her own jokes 😂","Falling asleep mid-text 😴","Randomly daydreaming 🌌","Smiling at her phone 😊"],
+    answer:1,
+    correctMsg:"I always love when u just epp mid convo",
+    wrongMsg:"Nothing is more cute than to watch u fall asleep"
+  },
+  { q:"If Amna was a drink, which one would she be?",
+    options:["Coffee ☕","Smoothie 🍓","Energy drink","Milkshake"],
+    answer:0,
+    correctMsg:"Strong and highly addictive",
+    wrongMsg:"You are my caffeine"
+  },
+  { q:"Who’s the better secret-keeper?",
+    options:["Mustfa","Amna"],
+    answer:1,
+    correctMsg:"Wootttttt I just get really excited",
+    wrongMsg:"Huhhhh meeeee???"
+  },
+  { q:"Would Amna love Mustfa if he wasn’t stinky?",
+    options:["Yes","No","Maybe","I don’t love him"],
+    answer:0,
+    correctMsg:"YAAAYYYYY",
+    wrongMsg:"HUHH WDYMM!!"
+  },
+  { q:"Who’s phone has a better battery?",
+    options:["Amna’s","Mustfa’s"],
+    answer:0,
+    correctMsg:"I get really jealousssss",
+    wrongMsg:"The Almighty S21 Ultra"
+  },
+  { q:"What’s the ultimate proof Mustfa & Amna are meant to be?",
+    options:["They never get tired of each other 💕","They fight but they still get back","They understand each other’s weirdness 🤪","They’re each other’s safe place 🏡"],
+    answers:[0,1,2,3],
+    correctMsg:"You’re my red string theory",
+    wrongMsg:"You’re my red string theory"
+  }
+];
+
+
+    // ======== QUIZ LOGIC ========
+    const shuffled = QUESTIONS.sort(() => Math.random() - 0.5);
+    let i = 0, score = 0, locked = false;
+
+    const qEl = document.getElementById("question");
+    const optsEl = document.getElementById("options");
+    const feedbackEl = document.getElementById("feedback");
+    const nextBtn = document.getElementById("nextBtn");
+    const bar = document.getElementById("bar");
+    const counter = document.getElementById("counter");
+    const resCard = document.getElementById("result");
+    const gameCard = document.getElementById("game");
+    const scoreLine = document.getElementById("scoreLine");
+    const msg = document.getElementById("message");
+    const againBtn = document.getElementById("againBtn");
+    const bestBadge = document.getElementById("best");
+
+    function render() {
+      const total = shuffled.length;
+      const curr = shuffled[i];
+      counter.textContent = `${i+1} / ${total}`;
+      bar.style.width = `${(i/total)*100}%`;
+      qEl.textContent = curr.q;
+      feedbackEl.textContent = "";
+      nextBtn.disabled = true;
+      locked = false;
+
+      optsEl.innerHTML = "";
+      curr.options.forEach((opt, idx) => {
+        const b = document.createElement("button");
+        b.className = "btn";
+        b.textContent = opt;
+        b.onclick = () => choose(idx);
+        optsEl.appendChild(b);
+      });
+    }
+
+    function choose(idx) {
+      if (locked) return;
+      locked = true;
+
+      const curr = shuffled[i];
+      const buttons = [...document.querySelectorAll(".btn")];
+
+      let correctIndexes = [];
+      if (typeof curr.answer === "number") correctIndexes = [curr.answer];
+      if (Array.isArray(curr.answers)) correctIndexes = curr.answers;
+
+      buttons.forEach((b, k) => {
+        if (correctIndexes.includes(k)) b.classList.add("correct");
+        else if (k === idx) b.classList.add("wrong");
+        b.disabled = true;
+      });
+
+      if (correctIndexes.includes(idx)) {
+        score++;
+        feedbackEl.textContent = curr.correctMsg || "Correct! 💖";
+      } else {
+        feedbackEl.textContent = curr.wrongMsg || "Hehe not quite, but I still love you ❤️";
+      }
+      nextBtn.disabled = false;
+    }
+
+    nextBtn.addEventListener("click", () => {
+      i++;
+      if (i < shuffled.length) render();
+      else finish();
+    });
+
+    function finish() {
+      bar.style.width = "100%";
+      gameCard.classList.add("hidden");
+      resCard.classList.remove("hidden");
+
+      const total = shuffled.length;
+      const pct = Math.round((score/total)*100);
+      scoreLine.textContent = `You scored ${score} / ${total} (${pct}%).`;
+      msg.textContent = pct >= 80
+        ? "Badge : Queen of Mustfa"
+        : pct >= 50
+          ? "I Love You A Lot. 💕"
+          : "Scores don’t matter. Love does. Let’s make more memories, and maybe some babies 🫶";
+
+      const key = "ourQuizHighScore";
+      const best = Math.max(+localStorage.getItem(key)||0, score);
+      localStorage.setItem(key, best);
+      bestBadge.textContent = `Best: ${best}`;
+      confetti();
+    }
+
+    againBtn.addEventListener("click", () => location.reload());
+
+    function confetti() {
+      const N = 80;
+      for (let k=0;k<N;k++){
+        const s = document.createElement("span");
+        s.textContent = ["💖","✨","💘","💞"][Math.floor(Math.random()*4)];
+        s.style.position="fixed";
+        s.style.left = Math.random()*100+"vw";
+        s.style.top = "-10vh";
+        s.style.fontSize = (16+Math.random()*18)+"px";
+        s.style.pointerEvents="none";
+        s.style.transition = "transform 2.2s ease, opacity 2.2s ease";
+        document.body.appendChild(s);
+        requestAnimationFrame(()=>{
+          s.style.transform = `translateY(${110+Math.random()*20}vh) rotate(${(Math.random()*360)}deg)`;
+          s.style.opacity = 0;
+        });
+        setTimeout(()=>s.remove(),2300+Math.random()*400);
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
+
